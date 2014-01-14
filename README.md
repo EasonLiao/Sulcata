@@ -1,4 +1,4 @@
 Sulcata
 =======
 
-A toy web server
+A toy web server.
