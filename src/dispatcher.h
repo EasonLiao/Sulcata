@@ -1,5 +1,5 @@
 #ifndef SULCATA_DISPATCHER_H
-#define SULCATA_DISPATVHER_H
+#define SULCATA_DISPATCHER_H
 
 #include <sys/types.h>
 #include <sys/socket.h>

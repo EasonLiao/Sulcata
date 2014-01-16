@@ -1,6 +1,6 @@
 .PHONY: clean
 
-OBJS := main.o server.o dispatcher.o handler.o
+OBJS := main.o server.o dispatcher.o handler.o rio.o
 
 CC := g++ 
 
