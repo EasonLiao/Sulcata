@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include "config.h"
 
 #define LINESIZE 4096
 

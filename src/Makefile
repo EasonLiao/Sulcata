@@ -1,7 +1,8 @@
 .PHONY: clean
 
-OBJS := main.o server.o dispatcher.o handler.o rio.o
-
+OBJS := main.o server.o dispatcher.o handler.o rio.o config.o
+CFLAGS := -std=c++0x
+LDFLAGS := -pthread
 CC := g++ 
 
 .cc.o:
