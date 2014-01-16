@@ -1,0 +1,4 @@
+*.swap
+*.tmp
+*.o
+*.out
