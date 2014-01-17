@@ -3,7 +3,9 @@
 #include <string.h>
 
 namespace sulcata{
-  using namespace std;
+  
+  server* server::singleton_ = NULL;
+  std::mutex server::mtx_;
 
   server::server(uint16_t port,
                   uint16_t max_connections):port_(port), 
@@ -35,15 +37,27 @@ namespace sulcata{
     if(listen(listenfd_, max_connections_) < 0)
       return false;
     
-    cout<<"waitting..."<<endl;
+    std::cout<<"waitting..."<<std::endl;
     
     while(1){
       socklen_t clientlen = sizeof(clientaddr);
       clientfd = accept(listenfd_, (sockaddr*)&clientaddr, &clientlen);  
-      cout<<"accept"<<endl;
+      std::cout<<"accept"<<std::endl;
 
       dispatcher_->dispatch(clientfd, &clientaddr);
     }
+  }
+
+  server* server::instance(){
+    if(singleton_ == NULL){
+      std::lock_guard<std::mutex> lock(mtx_);
+
+      if(singleton_ == NULL){
+        singleton_ = new server(8080, 10);
+      }
+    }
+
+    return singleton_;;
   }
 
 }//namespace ends

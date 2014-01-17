@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "dispatcher.h"
+#include <mutex>
 
 namespace sulcata{
 
@@ -14,10 +15,14 @@ namespace sulcata{
     uint16_t max_connections_;
     int listenfd_;
     dispatcher* dispatcher_;
+    
+    static std::mutex mtx_;
+    static server* singleton_;
 
     public:
       server(uint16_t port, uint16_t max_connections);  
       bool start();  
+      static server* instance();
   };
 
 }//namespace end

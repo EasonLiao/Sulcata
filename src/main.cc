@@ -3,8 +3,8 @@
 
 int main(int argv, char* argc[]){
   
-  sulcata::server s(8080, 10);
-  s.start();
+  sulcata::server *s = sulcata::server::instance();
+  s->start();
 
   return 0;
 }
