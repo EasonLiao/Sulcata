@@ -12,7 +12,6 @@ namespace sulcata{
 
   class server{
     uint16_t port_;
-    uint16_t max_connections_;
     int listenfd_;
     dispatcher* dispatcher_;
     
@@ -20,8 +19,8 @@ namespace sulcata{
     static server* singleton_;
 
     public:
-      server(uint16_t port, uint16_t max_connections);  
-      bool start();  
+      server();  
+      bool start(uint16_t port = 80);  
       static server* instance();
   };
 

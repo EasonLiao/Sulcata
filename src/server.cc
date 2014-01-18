@@ -7,14 +7,13 @@ namespace sulcata{
   server* server::singleton_ = NULL;
   std::mutex server::mtx_;
 
-  server::server(uint16_t port,
-                  uint16_t max_connections):port_(port), 
-                                            max_connections_(max_connections),
-                                            listenfd_(-1),
-                                            dispatcher_(new sequential_dispatcher()){}
+  server::server() :  port_(8080),
+                      listenfd_(-1),
+                      dispatcher_(new sequential_dispatcher()){}
 
   //start the server and wait for connections.
-  bool server::start(){
+  bool server::start(uint16_t port){
+    port_ = port;
     struct sockaddr_in serveraddr, clientaddr;
     int clientfd;
     int optval = 1;
@@ -34,7 +33,7 @@ namespace sulcata{
     if(bind(listenfd_, (sockaddr*)&serveraddr, sizeof(serveraddr)) < 0)
       return false;
   
-    if(listen(listenfd_, max_connections_) < 0)
+    if(listen(listenfd_, 100) < 0)
       return false;
     
     std::cout<<"waitting..."<<std::endl;
@@ -53,7 +52,7 @@ namespace sulcata{
       std::lock_guard<std::mutex> lock(mtx_);
 
       if(singleton_ == NULL){
-        singleton_ = new server(8080, 10);
+        singleton_ = new server();
       }
     }
 

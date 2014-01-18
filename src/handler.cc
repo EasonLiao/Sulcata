@@ -18,17 +18,11 @@ namespace sulcata{
     http_request req;
 
     while(parse_request_stream(&rt, req) == OK){
-      std::string val;
-      req.headers().get("Connection", val);
-      cout<<val<<endl;
-      cout<<req.get_method()<<endl;
-      cout<<req.get_path()<<endl;
-      cout<<req.get_http_ver()<<endl;
+      int ret = request_handler::handle(&rt, req);
     }
     
     cout<<"end!!"<<endl;
     close(fd);
-
     return 0;
   }
 
@@ -68,11 +62,27 @@ namespace sulcata{
       if(isspace(strline[pos + 1]))
         pos += 1;
 
-      value = strline.substr(pos + 1, strline.size() - pos);
+      value = strline.substr(pos + 1, strline.size() - pos - 2);
       req.headers().set(key, value);  
     }
 
     return OK;
+  }
+  
+  int request_handler::handle(rio_t *rt, http_request& req){ 
+    http_response resp;
+    resp.headers().set("Server", "Sulcate");
+    resp.headers().set("Connection", "ssSulcate");
+    resp.set_status_code(200);
+    resp.set_status_description("HAHA OK");
+    resp.set_http_ver("HTTP/1.1");
+
+    std::cout<<req<<std::endl;
+    std::cout<<"handled"<<std::endl;
+    
+    std::cout<<resp<<std::endl;
+
+    return 0;
   }
 
 }//namespace ends.
