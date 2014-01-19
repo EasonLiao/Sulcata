@@ -35,6 +35,9 @@ namespace sulcata{
 
     while(parse_request_stream(&rt, req) == OK){
       int ret = request_handler::handle(&rt, req);
+      
+      if(ret < 0)
+        break;
     }
     
     std::cout<<"end!!"<<std::endl;
@@ -162,11 +165,6 @@ namespace sulcata{
     handle_proc proc = iter->second->func;
     proc(rt, req, resp); 
     
-    /*
-    std::cout<<"suf : "<<suffix<<std::endl;
-    std::cout<<"fn : "<<filename<<std::endl;
-    std::cout<<"arg : "<<args<<std::endl;
-    */
     return 0;
   }
   
