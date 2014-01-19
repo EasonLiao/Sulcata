@@ -1,5 +1,8 @@
 #include <unistd.h>
 #include "rio.h"
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
 
@@ -78,6 +81,26 @@ namespace sulcata{
       bufp += nread;
     }
     return (n - nleft); /* Return >= 0 */
+  }
+  
+  ssize_t rio_writen(rio_t *rp, const void* usrbuf, size_t n){
+    int fd = rp->rio_fd;
+    size_t nleft = n;
+    ssize_t nwritten;
+    const char* bufp = (const char*)usrbuf;
+
+    while(nleft > 0){
+      if((nwritten = write(fd, bufp, nleft)) <= 0){
+        if(errno == EINTR)
+          nwritten = 0;
+        else
+          return -1;
+      }
+
+      nleft -= nwritten;
+      bufp += nwritten;
+    }
+    return n;
   }
 
 }//namespace ends

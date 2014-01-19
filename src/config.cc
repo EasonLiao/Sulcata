@@ -4,7 +4,9 @@ namespace sulcata{
   configuration* configuration::singleton_ = NULL;
   std::mutex configuration::mtx_;
 
-  configuration::configuration(){}
+  configuration::configuration(){
+    default_config_.docroot = "../html/";
+  }
   
   configuration::~configuration(){   
   }

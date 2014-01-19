@@ -11,7 +11,6 @@ namespace sulcata{
   //This structure holds the configuration for each host.
   typedef struct{
     std::string docroot; /*Path of docroots for this host*/
-
   } host_configuration;
 
   //This class holds the configuration for whole server.
@@ -20,7 +19,7 @@ namespace sulcata{
       //This is the default configuration if the 
       //host can't be found in the defined host table.
       host_configuration default_config_; 
-
+      
       //map between host name to host config structure.
       std::map<std::string, host_configuration*> config_table_; 
       
@@ -29,6 +28,7 @@ namespace sulcata{
       static std::mutex mtx_;
 
     public:
+      host_configuration& default_config(){ return default_config_; }
       configuration();
       ~configuration();
       static configuration* instance();

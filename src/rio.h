@@ -19,6 +19,8 @@ namespace sulcata{
   ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
   
   ssize_t rio_readnb(rio_t *rp, void *usrbuf, size_t n);
+  
+  ssize_t rio_writen(rio_t *rp, const void* usrbuf, size_t n);
 
 }//namespace ends
 
