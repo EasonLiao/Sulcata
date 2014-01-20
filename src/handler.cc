@@ -11,11 +11,12 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sstream>
+#include "template.h"
 
 #define LINESIZE 4096
 
 namespace sulcata{
-  
+
   static handle_pair pairs[] = {  {"html",  "text/html",  static_file_handler::handle},
                                   {"htm",   "text/html",  static_file_handler::handle},
                                   {"jpg",   "image/jpeg", static_file_handler::handle},
@@ -34,10 +35,8 @@ namespace sulcata{
     http_request req;
 
     while(parse_request_stream(&rt, req) == OK){
-      int ret = request_handler::handle(&rt, req);
-      
-      if(ret < 0)
-        break;
+      int ret = request_handler::handle(&rt, req); 
+      break;
     }
     
     std::cout<<"end!!"<<std::endl;
@@ -150,7 +149,12 @@ namespace sulcata{
 
     struct stat sbuf;
     if(stat(filepath.c_str(), &sbuf) < 0){
-      std::cerr<<"can't find file 404"<<filepath<<std::endl;
+      resp.set_status_code(404);
+      resp.set_status_description("Not Found");
+      std::string content = error_page("404", "404 not found");
+      std::cout<<error_page("404", "404 not found")<<std::endl;
+      rio_writen(rt, content.c_str(), content.size());
+      
       return -1;
     }
     
@@ -170,26 +174,29 @@ namespace sulcata{
   
   int static_file_handler::handle(rio_t* rt, http_request& req, http_response &resp){
     uint64_t filesize = req.get_stat()->st_size;
-    std::stringstream ss;
+    std::stringstream ssize, ss;
     std::string content;
-    ss << filesize;
+    ssize << filesize;
 
     resp.set_status_code(200);
     resp.set_status_description("OK");
     resp.headers().set("Content-type", resp.get_mime_type()); 
-    resp.headers().set("Content-length", ss.str()); 
-    
-    ss.clear();
+    resp.headers().set("Content-length", ssize.str()); 
+     
     ss << resp;
     content = ss.str(); 
+    
+    std::cout<<content<<std::endl;
+    
     rio_writen(rt, content.c_str(), content.size());
     
     int srcfd = open(req.get_filepath().c_str(), O_RDONLY, 0);
     char* srcp;
     srcp = (char*)mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
-    close(srcfd);
     
+    std::cout<<filesize<<std::endl;
     rio_writen(rt, srcp, filesize);
+    close(srcfd);
     munmap(srcp, filesize);
 
     return 0;
