@@ -16,6 +16,8 @@ namespace sulcata{
 
   class connection_handler{
     enum {CONNECTION_ERROR, FORMAT_ERROR, OK};
+    static void parse_uri(std::string &uri, std::string& filename, std::string& args);
+    static void get_file_extension(const std::string& filename, std::string &suffix);
 
     public:
       static int parse_request_stream(rio_t* rt, http_request& req);
@@ -26,8 +28,6 @@ namespace sulcata{
     //Table which maps suffix to proper handler function.
     static std::map<std::string, handle_pair*> suffix2proc_;
     static void register_handlers(handle_pair* handlers);
-    static void parse_uri(std::string &uri, std::string& filename, std::string& args);
-    static void get_file_extension(const std::string& filename, std::string &suffix);
     
     public:
       request_handler(handle_pair* handlers = NULL);

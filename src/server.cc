@@ -36,13 +36,14 @@ namespace sulcata{
     if(listen(listenfd_, 100) < 0)
       return false;
     
-    std::cout<<"waitting..."<<std::endl;
+    std::cout<<"Waitting..."<<std::endl;
     
     while(1){
       socklen_t clientlen = sizeof(clientaddr);
       clientfd = accept(listenfd_, (sockaddr*)&clientaddr, &clientlen);  
-      std::cout<<"accept"<<std::endl;
-
+      
+      std::cout<<"Accept client connection request..."<<std::endl;
+      std::cout<<"==================================="<<std::endl;
       dispatcher_->dispatch(clientfd, &clientaddr);
     }
   }

@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <sys/stat.h>
+#include <sstream>
 
 namespace sulcata{
  
@@ -66,6 +67,7 @@ namespace sulcata{
     protected:
       std::string method_;
       std::string path_;
+      std::string suffix_;
       struct stat* file_stat_;
        
     public:
@@ -77,6 +79,9 @@ namespace sulcata{
 
       void set_stat(struct stat* file_stat) { file_stat_ = file_stat; }
       struct stat* get_stat() { return file_stat_; }
+
+      void set_suffix(std::string& suffix) { suffix_ = suffix; }
+      std::string& get_suffix() { return suffix_; }
 
       friend std::ostream& operator<<(std::ostream& os, http_request& req){
         os<<req.method_<<" "<<req.path_<<" "<<req.http_ver_<<std::endl;
@@ -106,7 +111,13 @@ namespace sulcata{
         os<<resp.headers_;
         os<<resp.body_;
       }
-  };
+
+      std::string get_response_line(){ 
+        std::stringstream ss;
+        ss<<http_ver_<<" "<<status_<<" "<<description_<<std::endl;
+        return ss.str();
+      }
+    };
 
 }//end namespace.
 

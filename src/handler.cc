@@ -12,6 +12,7 @@
 #include <sys/mman.h>
 #include <sstream>
 #include "template.h"
+#include <sys/wait.h>
 
 #define LINESIZE 4096
 
@@ -28,29 +29,33 @@ namespace sulcata{
 
   std::map<std::string, handle_pair*> request_handler::suffix2proc_;
   request_handler g_init(pairs); 
-
+  
+  //Connection handler
   int connection_handler::serve(int fd, sockaddr_in* addr){
     rio_t rt;
     rio_readinitb(&rt, fd);
     http_request req;
+    
+    std::cout<<"Processing request..."<<std::endl<<std::endl;
 
     while(parse_request_stream(&rt, req) == OK){
       int ret = request_handler::handle(&rt, req); 
       break;
     }
     
-    std::cout<<"end!!"<<std::endl;
     close(fd);
     return 0;
   }
-
+  
+  //Parse the HTTP stream to HttpRequest object.
   int connection_handler::parse_request_stream(rio_t *rt, http_request& req){
     char line[LINESIZE];
     char method[32];
     char path[LINESIZE];
     char http_version[32];
     int ret;
-    
+    std::string filepath, args, suffix, filename;
+
     //read request line
     ret = rio_readlineb(rt, line, LINESIZE);
     if(ret == 0 || ret == -1)
@@ -83,10 +88,88 @@ namespace sulcata{
       value = strline.substr(pos + 1, strline.size() - pos - 2);
       req.headers().set(key, value);  
     }
+    
+    parse_uri(req.get_path(), filename, args);
+    
+    req.set_filename(filename);
+    req.set_args(args);
+    
+    filepath = configuration::instance()->default_config().docroot + req.get_filename(); 
+    req.set_filepath(filepath);
+    
+    get_file_extension(filename, suffix);
+    req.set_suffix(suffix);
 
     return OK;
   }
   
+  
+  void connection_handler::parse_uri(std::string& uri,
+                                  std::string& filename,
+                                  std::string& args){
+    if(uri[0] == '/')
+      uri = uri.substr(1, uri.size() - 1);
+
+    size_t pos = uri.find('?');
+    
+    if(pos != std::string::npos){
+      args = uri.substr(pos + 1, uri.size() - pos);
+      filename = uri.substr(0, pos);
+    }else{
+      args = ""; 
+      filename = uri;
+    }
+  }
+
+  void connection_handler::get_file_extension(const std::string& filename,
+                                            std::string& suffix){
+    size_t pos = filename.find('.');
+    if(pos == std::string::npos){
+      suffix = "";
+      return;
+    }
+    suffix = filename.substr(pos + 1, filename.size() - pos);
+  }
+
+  int request_handler::handle(rio_t *rt, http_request& req){ 
+    http_response resp;
+    resp.headers().set("Server", "Sulcata");
+    resp.set_http_ver("HTTP/1.1");
+    
+    std::string filepath = req.get_filepath();
+    std::string suffx = req.get_suffix();
+
+    std::cout<<">>>> Request Header >>>>"<<std::endl;
+    std::cout<<req;
+
+    struct stat sbuf;
+    if(stat(filepath.c_str(), &sbuf) < 0){
+      resp.set_status_code(404);
+      resp.set_status_description("Not Found");
+      std::string content = error_page("404", "404 not found");
+      rio_writen(rt, content.c_str(), content.size());
+      
+      return -1;
+    }
+    
+    req.set_stat(&sbuf);
+
+    std::map<std::string, handle_pair*>::iterator iter = suffix2proc_.find(req.get_suffix());
+
+    if(iter == suffix2proc_.end())
+      return -1; 
+    
+    resp.set_mime_type(iter->second->mime_type);
+    handle_proc proc = iter->second->func;
+    proc(rt, req, resp); 
+    
+    return 0;
+  }
+  
+
+  // Request handler: 
+  // This class is responsible for handling the request by calling the specific handle class
+  // to handle different kinds of request. 
   request_handler::request_handler(handle_pair* handlers){
     register_handlers(handlers);
   }
@@ -104,74 +187,7 @@ namespace sulcata{
     }
   }
   
-  void request_handler::parse_uri(std::string& uri,
-                                  std::string& filename,
-                                  std::string& args){
-    if(uri[0] == '/')
-      uri = uri.substr(1, uri.size() - 1);
-
-    size_t pos = uri.find('?');
-    
-    if(pos != std::string::npos){
-      args = uri.substr(pos + 1, uri.size() - pos);
-      filename = uri.substr(0, pos);
-    }else{
-      args = ""; 
-      filename = uri;
-    }
-  }
-
-  void request_handler::get_file_extension(const std::string& filename,
-                                            std::string& suffix){
-    size_t pos = filename.find('.');
-    if(pos == std::string::npos){
-      suffix = "";
-      return;
-    }
-    suffix = filename.substr(pos + 1, filename.size() - pos);
-  }
-
-  int request_handler::handle(rio_t *rt, http_request& req){ 
-    http_response resp;
-    resp.headers().set("Server", "Sulcate");
-    resp.set_http_ver("HTTP/1.1");
-
-    std::string filename, args, suffix, filepath;
-  
-    parse_uri(req.get_path(), filename, args);
-    get_file_extension(filename, suffix); 
-    
-    req.set_filename(filename);
-    req.set_args(args);
-    
-    filepath = configuration::instance()->default_config().docroot + filename; 
-    req.set_filepath(filepath);
-
-    struct stat sbuf;
-    if(stat(filepath.c_str(), &sbuf) < 0){
-      resp.set_status_code(404);
-      resp.set_status_description("Not Found");
-      std::string content = error_page("404", "404 not found");
-      std::cout<<error_page("404", "404 not found")<<std::endl;
-      rio_writen(rt, content.c_str(), content.size());
-      
-      return -1;
-    }
-    
-    req.set_stat(&sbuf);
-
-    std::map<std::string, handle_pair*>::iterator iter = suffix2proc_.find(suffix);
-
-    if(iter == suffix2proc_.end())
-      return -1; 
-    
-    resp.set_mime_type(iter->second->mime_type);
-    handle_proc proc = iter->second->func;
-    proc(rt, req, resp); 
-    
-    return 0;
-  }
-  
+  //Handle static file request.
   int static_file_handler::handle(rio_t* rt, http_request& req, http_response &resp){
     uint64_t filesize = req.get_stat()->st_size;
     std::stringstream ssize, ss;
@@ -186,7 +202,8 @@ namespace sulcata{
     ss << resp;
     content = ss.str(); 
     
-    std::cout<<content<<std::endl;
+    std::cout<<"<<<< Response Header <<<<"<<std::endl;
+    std::cout<<content;
     
     rio_writen(rt, content.c_str(), content.size());
     
@@ -194,7 +211,6 @@ namespace sulcata{
     char* srcp;
     srcp = (char*)mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
     
-    std::cout<<filesize<<std::endl;
     rio_writen(rt, srcp, filesize);
     close(srcfd);
     munmap(srcp, filesize);
@@ -202,8 +218,28 @@ namespace sulcata{
     return 0;
   }
   
+  //Handle CGI file request.
   int cgi_file_handler::handle(rio_t* rt, http_request& req, http_response &resp){
-    std::cout<<"cgi handle"<<std::endl; 
+    std::string content;
+    int ret_status;
+    char* empty_list[] = {NULL};
+    pid_t pid;
+
+    resp.set_status_code(200);
+    resp.set_status_description("OK");
+    std::stringstream ss;
+    content = resp.get_response_line();
+
+    rio_writen(rt, content.c_str(), content.size());
+    pid = fork();
+
+    if(pid == 0){
+      close(STDOUT_FILENO);
+      dup2(rt->rio_fd, STDOUT_FILENO);
+      execve(req.get_filepath().c_str(), empty_list, environ);
+    }
+    
+    waitpid(pid, &ret_status, 0);
     return 0;
   }
 
