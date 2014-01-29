@@ -6,6 +6,11 @@ namespace sulcata{
 
   configuration::configuration(){
     default_config_.docroot = "../html/";
+    default_config_.default_files.push_back("index.html");
+    default_config_.default_files.push_back("index.htm");
+    default_config_.default_files.push_back("home.html");
+    default_config_.default_files.push_back("home.htm");
+    default_config_.default_files.push_back("index.cgi");
   }
   
   configuration::~configuration(){   

@@ -28,7 +28,8 @@ namespace sulcata{
     //Table which maps suffix to proper handler function.
     static std::map<std::string, handle_pair*> suffix2proc_;
     static void register_handlers(handle_pair* handlers);
-    
+    static void serve_404(rio_t* rt, http_response& resp);
+
     public:
       request_handler(handle_pair* handlers = NULL);
       static int handle(rio_t* rt, http_request& req);

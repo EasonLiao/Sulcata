@@ -5,12 +5,16 @@
 #include <map>
 #include <iostream>
 #include <mutex>
+#include <list>
 
 namespace sulcata{
   
   //This structure holds the configuration for each host.
   typedef struct{
-    std::string docroot; /*Path of docroots for this host*/
+    //Path of docroots for this host
+    std::string docroot; 
+    //Return one of these files when the path is a directory
+    std::list<std::string> default_files; 
   } host_configuration;
 
   //This class holds the configuration for whole server.
